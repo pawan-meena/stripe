@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Item Payment</title>
+    <!-- Bootstrap CSS CDN -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Font for better typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap" rel="stylesheet">
+    <!-- Custom CSS for animations and styling -->
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f7f7f7;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 30px;
+            color: #007bff;
+        }
+        .container {
+            max-width: 500px;
+            background: #fff;
+            padding: 30px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+        .form-group label {
+            font-weight: 600;
+        }
+        .form-control {
+            border: 1px solid #007bff;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .btn-animated {
+            background-color: #007bff;
+            color: white;
+            font-size: 16px;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .btn-animated:before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 300%;
+            height: 300%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: all 0.6s ease;
+            border-radius: 50%;
+            transform: translate(-50%, -50%) scale(0);
+        }
+        .btn-animated:hover:before {
+            transform: translate(-50%, -50%) scale(1);
+        }
+        .btn-animated:hover {
+            background-color: #0056b3;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+        .price-feedback {
+            font-weight: bold;
+            color: #28a745;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container mt-5">
+        <h1>Pay Amount for Item</h1>
+
+        <!-- Form for Stripe Checkout -->
+        <form id="paymentForm" action="/subscribe.php" method="POST">
+            <div class="form-group">
+                <label for="itemId">Item ID</label>
+                <input type="text" class="form-control" id="itemId" name="item_id" placeholder="Enter Item ID" required>
+            </div>
+            <div class="form-group">
+                <label for="itemName">Item Name</label>
+                <input type="text" class="form-control" id="itemName" name="item_name" placeholder="Enter Item name" required>
+            </div>
+            <div class="form-group">
+                <label for="itemDescription">Item Description</label>
+                <textarea class="form-control" id="itemDescription" name="item_description" rows="3" placeholder="Enter Item description" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="price">Price (in USD)</label>
+                <input type="number" class="form-control" id="price" name="price" placeholder="Enter price in dollars (e.g., 20 for $20)" required>
+                <p class="price-feedback" id="priceFeedback"></p>
+            </div>
+
+            <!-- Stripe Checkout button -->
+            <button type="submit" class="btn-animated" id="customPayButton">Pay Now</button>
+        </form>
+    </div>
+
+    <!-- Bootstrap JS, Popper.js, and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <!-- Stripe Checkout Script -->
+    <script src="https://checkout.stripe.com/checkout.js"></script>
+
+    <script>
+        document.getElementById('price').addEventListener('input', function () {
+            var priceInDollars = document.getElementById('price').value;
+            document.getElementById('priceFeedback').style.display = 'block';
+            document.getElementById('priceFeedback').innerText = 'Price in cents: ' + (priceInDollars * 100);
+        });
+
+        document.getElementById('paymentForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            var priceInDollars = document.getElementById('price').value;
+            var priceInCents = priceInDollars * 100;
+
+            // Initialize Stripe Checkout
+            var handler = StripeCheckout.configure({
+                key: 'pk_test_51JGPBgSC4yc2oxfAlTZ29X26oAtUABLCpgs0DUhX202bAwgZz0yGSC0cqHCMCbLpTYA5bJd1Ct0vofsz3vFe5u8X00deKXERq7',
+                locale: 'auto',
+                token: function(token) {
+                    // Form submission logic on token creation
+                    var form = document.getElementById('paymentForm');
+                    var hiddenInput = document.createElement('input');
+                    hiddenInput.setAttribute('type', 'hidden');
+                    hiddenInput.setAttribute('name', 'stripeToken');
+                    hiddenInput.setAttribute('value', token.id);
+                    form.appendChild(hiddenInput);
+
+                    form.submit();
+                }
+            });
+
+            handler.open({
+                name: 'Item Payment',
+                description: document.getElementById('itemDescription').value,
+                amount: priceInCents,  // Amount in cents
+                currency: 'usd'
+            });
+        });
+    </script>
+</body>
+</html>
